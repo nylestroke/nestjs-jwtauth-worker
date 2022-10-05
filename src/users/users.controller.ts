@@ -1,7 +1,7 @@
-import {Body, Controller, Get, Param, Post, UseGuards, UsePipes} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards, UsePipes} from '@nestjs/common';
 import {CreateUserDto} from "./dto/create-user.dto";
 import {UsersService} from "./users.service";
-import {ApiOperation, ApiResponse, ApiTags} from "@nestjs/swagger";
+import {ApiOperation, ApiProperty, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {User} from "./users.model";
 import {JwtAuthGuard} from "../auth/jwt-auth.guard";
 import {Roles} from "../auth/roles.decorator";
@@ -9,6 +9,7 @@ import {RolesGuard} from "../auth/roles.guard";
 import {AddRoleDto} from "./dto/add-role.dto";
 import {BanUserDto} from "./dto/ban-user.dto";
 import {ValidationPipe} from "../pipes/validation.pipe";
+import {UnbanUserDto} from "./dto/unban-user.dto";
 
 @ApiTags('Пользователи')
 @Controller('users')
@@ -55,7 +56,7 @@ export class UsersController {
     })
     @UseGuards(JwtAuthGuard)
     @Get('/:email')
-    getUserByEmail(@Param() data: {email: string}) {
+    getUserByEmail(@Param() data: { email: string }) {
         return this.userService.getUserByEmail(data.email);
     }
 
@@ -63,17 +64,33 @@ export class UsersController {
     @ApiResponse({status: 200})
     @Roles('Администратор')
     @UseGuards(RolesGuard)
-    @Post('/role')
+    @Patch('/role')
     addRole(@Body() dto: AddRoleDto) {
         return this.userService.addRole(dto);
     }
 
-    @ApiOperation({summary: 'Забанить пользователя'})
+    @ApiOperation({summary: 'Заблокировать пользователя'})
     @ApiResponse({status: 200})
     @Roles('Администратор')
     @UseGuards(RolesGuard)
-    @Post('/ban')
+    @Put('/ban')
     ban(@Body() dto: BanUserDto) {
         return this.userService.ban(dto);
+    }
+
+    @ApiOperation({summary: 'Разблокировать пользователя'})
+    @ApiResponse({status: 200})
+    @Roles('Администратор')
+    @UseGuards(RolesGuard)
+    @Put('/unban')
+    unban(@Body() dto: UnbanUserDto) {
+        return this.userService.unban(dto);
+    }
+
+    @ApiOperation({summary: 'Удалить пользователя / его аккаунт'})
+    @ApiResponse({status: 200})
+    @Delete('/delete')
+    delete(@Body() dto: UnbanUserDto) {
+        return this.userService.delete(dto);
     }
 }

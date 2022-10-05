@@ -19,4 +19,15 @@ export class PostsService {
             throw new HttpException({status: 'error', error: errors}, HttpStatus.BAD_REQUEST);
         }
     }
+
+    async delete(id: number) {
+        const post = await this.postRepository.findByPk(id);
+        if (!post) {
+            throw new HttpException("Не удалость найти статью по данному идентификатору", HttpStatus.NOT_FOUND);
+        }
+        await post.destroy();
+        return {
+            status: 200
+        }
+    }
 }

@@ -5,12 +5,16 @@ import {CreateUserDto} from "./dto/create-user.dto";
 import {RolesService} from "../roles/roles.service";
 import {AddRoleDto} from "./dto/add-role.dto";
 import {BanUserDto} from "./dto/ban-user.dto";
+import {UnbanUserDto} from "./dto/unban-user.dto";
+import {UserRoles} from "../roles/user-roles.model";
 
 @Injectable()
 export class UsersService {
 
-    constructor(@InjectModel(User) private userRepository: typeof User, private roleService: RolesService) {
-    }
+    constructor(
+        @InjectModel(User) private userRepository:
+        typeof User, private roleService: RolesService,
+    ) {}
 
     async createUser(dto: CreateUserDto) {
         const user =  await this.userRepository.create(dto);
@@ -33,8 +37,8 @@ export class UsersService {
         const role = await this.roleService.getRoleByValue(dto.value);
 
         if (role && user) {
-           await user.$add('role', role.id);
-           return dto;
+            await user.$add('role', role.id);
+            return dto;
         }
         throw new HttpException({message: 'Пользователь или роль не найден'}, HttpStatus.NOT_FOUND);
     }
@@ -45,7 +49,7 @@ export class UsersService {
             throw new HttpException({message: 'Пользователь не найден'}, HttpStatus.NOT_FOUND);
         }
         if (user.banned) {
-            throw new HttpException({status: 400, message: `Пользователь ${user.email} уже забанен`}, HttpStatus.BAD_REQUEST);
+            throw new HttpException({status: 400, message: `Пользователь ${user.email} уже заблокирован.`}, HttpStatus.BAD_REQUEST);
         }
         user.banned = true;
         user.banReason = dto.banReason;
@@ -54,6 +58,34 @@ export class UsersService {
             status: 200,
             message: `Пользователь ${user.email} успешно забанен`
         };
+    }
+
+    async unban(dto: UnbanUserDto) {
+        const user = await this.userRepository.findByPk(dto.userId);
+        if (!user) {
+            throw new HttpException({message: 'Пользователь не найден'}, HttpStatus.NOT_FOUND);
+        }
+        if (!user.banned) {
+            throw new HttpException({status: 400, message: `Пользователь ${user.email} не заблокирован.`}, HttpStatus.BAD_REQUEST);
+        }
+        user.banned = false;
+        user.banReason = null;
+        await user.save();
+        return {
+            status: 200,
+            message: `Пользователь ${user.email} успешно разблокирован`
+        }
+    }
+
+    async delete(dto: UnbanUserDto) {
+        const user = await this.userRepository.findByPk(dto.userId);
+        if (!user) {
+            throw new HttpException({message: 'Пользователь не найден'}, HttpStatus.NOT_FOUND);
+        }
+        await user.destroy();
+        return {
+            status: 200
+        }
     }
 
 }
