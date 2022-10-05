@@ -24,6 +24,8 @@ export class UsersController {
         status: 200,
         type: User
     })
+    @UseGuards(RolesGuard)
+    @Roles('Администратор')
     @UsePipes(ValidationPipe)
     @Post('/create')
     create(@Body() userDto: CreateUserDto) {
